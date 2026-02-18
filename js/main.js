@@ -1,40 +1,37 @@
 Vue.component('first-column', {
-
+    props: ['cards'],
     template: `
-    <div class="first-column">
-    <h2>First column</h2>
-    </div>`,
-
-    data() {
-    },
-
-    methods: {
-
-    }
-})
-
-
-Vue.component('second-column', {
-    template: `
-    <div class="second-column">
-        <h2>Second column</h2>
-    </div>
+        <div class="column">
+            <h2>Первая колонка</h2>
+            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
+        </div>
     `
 })
 
+Vue.component('second-column', {
+    props: ['cards'],
+    template: `
+        <div class="column">
+            <h2>Вторая колонка</h2>
+            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
+        </div>
+    `
+})
 
 Vue.component('third-column', {
+    props: ['cards'],
     template: `
-    <div class="third-column">
-        <h2>Third column</h2>
-    </div>
+        <div class="column">
+            <h2>Третья колонка</h2>
+            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
+        </div>
     `
 })
 
 
 Vue.component('card', {
     props: {
-    column: Array
+   card: Object,
     },
 
     template: `
@@ -56,26 +53,24 @@ Vue.component('card', {
 
     data() {
         return {
-            title: null,
-            description: null,
+            title: this.card.title || '', // берем из props.card
+            description: this.card.description || '',
             isFull: false
-        }
+        };
     },
 
     methods: {
         onSubmit() {
-        if (this.column.length <= 3 ) {
-        let card = {
-            name: this.name,
-            review: this.review,
-            rating: this.rating,
-            recommendation: this.recommendation,
-        };
-    }
-}
+            this.$emit('update-card', {
+                ...this.card,
+                title: this.title,
+                description: this.description
+            });
 
+            alert('Карточка сохранена!');
+        }
     }
-});
+})
 
 
 let app = new Vue({
@@ -84,8 +79,49 @@ let app = new Vue({
         firstColumnCards: [],
         secondColumnCards: [],
         thirdColumnCards: [],
+        newCard: {
+            id:null,
+            title: '',
+            description: '',
+        }
     },
 
     methods: {
+        updateCard(updatedCard) {
+            const columns = [this.firstColumnCards, this.secondColumnCards, this.thirdColumnCards];
+            for (const col of columns) {
+                const idx = col.findIndex(c => c.id === updatedCard.id);
+                if (idx !== -1) {
+                    col.splice(idx, 1, updatedCard);
+                    break;
+                }
+            }
+        },
+
+        addNewCard(cardData) {
+            if (!cardData.title) {
+                alert('Введите заголовок');
+                return;
+            }
+
+            // Создаем уникальный ID для новых карточек (можно улучшить, если нужно)
+            const newId = Date.now();
+
+            // Создаем новую карточку с уникальным ID
+            const newCard = {
+                id: newId,
+                title: cardData.title,
+                description: cardData.description,
+            };
+
+            // Добавляем карточку в первую колонку (можно изменить на другую)
+            this.firstColumnCards.push(newCard);
+
+            // Очищаем форму создания новой карточки
+            this.newCard.title = '';
+            this.newCard.description = '';
+
+            alert('Новая карточка добавлена!');
+        }
     }
 });

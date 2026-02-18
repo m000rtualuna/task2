@@ -13,7 +13,16 @@
 <body>
 
 <div id="app">
-    <column></column>
+    <h2>Создать новую карточку</h2>
+    <card
+            :card="newCard"
+            @update-card="addNewCard"
+            @submit.prevent
+    ></card>
+
+        <first-column :cards="firstColumnCards" @update-card="updateCard"></first-column>
+        <second-column :cards="secondColumnCards" @update-card="updateCard"></second-column>
+        <third-column :cards="thirdColumnCards" @update-card="updateCard"></third-column>
 </div>
 
 </body>
