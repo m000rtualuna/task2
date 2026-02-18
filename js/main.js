@@ -1,22 +1,35 @@
-Vue.component('column', {
+Vue.component('first-column', {
 
     template: `
-    <div class="column">
-    <card></card>
-</div>`,
+    <div class="first-column">
+    <h2>First column</h2>
+    </div>`,
 
     data() {
-        return {
-            column: [],
-            columns: ['first', 'second', 'third'],
-            cards: []
-        }
     },
 
     methods: {
 
     }
-});
+})
+
+
+Vue.component('second-column', {
+    template: `
+    <div class="second-column">
+        <h2>Second column</h2>
+    </div>
+    `
+})
+
+
+Vue.component('third-column', {
+    template: `
+    <div class="third-column">
+        <h2>Third column</h2>
+    </div>
+    `
+})
 
 
 Vue.component('card', {
@@ -68,6 +81,9 @@ Vue.component('card', {
 let app = new Vue({
     el: '#app',
     data: {
+        firstColumnCards: [],
+        secondColumnCards: [],
+        thirdColumnCards: [],
     },
 
     methods: {
