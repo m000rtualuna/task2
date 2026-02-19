@@ -86,13 +86,10 @@ let app = new Vue({
             if (firstIdx !== -1) {
 
                 if (progress > 0.5) {
-                    if (this.secondColumnCards.length >= 5) {
-                        alert("no");
-                    } else {
-                        const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
-                        this.secondColumnCards.push(movedCard);
+                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
+                    this.secondColumnCards.push(movedCard);
                     }
-                }
+                this.saveData();
                 return;
             }
 
@@ -104,6 +101,7 @@ let app = new Vue({
                     const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
                     this.thirdColumnCards.push(movedCard);
                 }
+                this.saveData();
                 return;
             }
 
@@ -115,8 +113,8 @@ let app = new Vue({
         },
 
         addNewCard() {
-            if (this.firstColumnCards.length >= 3) {
-                alert("You can't add more than 3 cards :(");
+            if (this.firstColumnCards.length >= 3 || this.secondColumnCards.length >= 5) {
+                alert("You cannot add a card until there are three cards in the first column or five cards in the second column:(");
                 return;
             }
 
@@ -129,8 +127,8 @@ let app = new Vue({
             while (i <= 3) {
                 let text = '';
                 do {
-                    text = prompt(`Task ${i} `);
-                    if (!text) alert('Please enter the task');
+                    text = prompt(`Note ${i} `);
+                    if (!text) alert('Please enter the note');
                 } while (!text);
 
                 items.push({ text, done: false });
@@ -138,10 +136,10 @@ let app = new Vue({
             }
 
             while (i <= 5) {
-                const cont = confirm('Add a task?');
+                const cont = confirm('Add a note?');
                 if (!cont) break;
 
-                const text = prompt(`Task ${i}`);
+                const text = prompt(`Note ${i}`);
                 if (!text) break;
 
                 items.push({ text, done: false });
