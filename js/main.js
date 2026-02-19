@@ -1,5 +1,5 @@
 Vue.component('column', {
-    props: ['title', 'cards'],
+    props: ['title', 'cards', 'checkAllowed'],
     template: `
     <div class="column">
       <h2>{{ title }}</h2>
@@ -7,6 +7,7 @@ Vue.component('column', {
         v-for="card in cards" 
         :key="card.id" 
         :card="card" 
+        :checkAllowed="checkAllowed"
         @update-card="$emit('update-card', $event)"
       ></card>
     </div>
@@ -17,29 +18,42 @@ Vue.component('column', {
 Vue.component('card', {
     props: {
         card: Object,
+        checkAllowed: {
+            type: Function,
+            default: () => () => true
+        }
     },
 
     template: `
-        <div>
-        <h3>{{ card.title }}</h3>
-        <ul>
-          <li v-for="(item, index) in card.items" :key="index">
-            <label>
-              <input type="checkbox" v-model="item.done" @change="onCheckBoxChange">
-              {{ item.text }}
-            </label>
-          </li>
-        </ul>
-        <p v-if="card.completedAt" class="completed-info">Завершено: {{ card.completedAt }}</p>
-        </div>
-    `,
+    <div>
+      <h3>{{ card.title }}</h3>
+      <ul>
+        <li v-for="(item, index) in card.items" :key="index">
+          <label>
+            <input 
+              type="checkbox" 
+              :checked="item.done" 
+              @click.prevent="onCheckBoxClick(item)"
+            >
+            {{ item.text }}
+          </label>
+        </li>
+      </ul>
+      <p v-if="card.completedAt" class="completed-info">Завершено: {{ card.completedAt }}</p>
+    </div>
+  `,
 
     methods: {
-        onCheckBoxChange() {
+        onCheckBoxClick(item) {
+            if (!this.checkAllowed(this.card, item)) {
+                alert('Ошибка: Вы не можете отметить этот пункт');
+                return;
+            }
+            item.done = !item.done;
             this.$emit('update-card', this.card);
         }
-    },
-})
+    }
+});
 
 
 let app = new Vue({
@@ -83,11 +97,7 @@ let app = new Vue({
 
             let firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
             if (firstIdx !== -1) {
-                if (progress === 1) {
-                    updatedCard.completedAt = new Date().toLocaleString();
-                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
-                    this.thirdColumnCards.push(movedCard);
-                } else if (progress > 0.5) {
+                if (progress > 0.5) {
                     if (this.secondColumnCards.length >= 5) {
                         alert('Во второй колонке уже максимальное количество списков (5)');
                         this.firstColumnCards.splice(firstIdx, 1, updatedCard);
@@ -97,9 +107,6 @@ let app = new Vue({
                         const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
                         this.secondColumnCards.push(movedCard);
                     }
-                } else {
-                    this.firstColumnCards.splice(firstIdx, 1, updatedCard);
-                    updatedCard.completedAt = null;
                 }
                 this.saveData();
                 return;
@@ -111,16 +118,6 @@ let app = new Vue({
                     updatedCard.completedAt = new Date().toLocaleString();
                     const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
                     this.thirdColumnCards.push(movedCard);
-                } else if (progress <= 0.5) {
-                    if (this.firstColumnCards.length >= 3) {
-                        alert('В первой колонке уже максимальное количество списков (3)');
-                        this.secondColumnCards.splice(secondIdx, 1, updatedCard);
-                        updatedCard.completedAt = null;
-                    } else {
-                        updatedCard.completedAt = null;
-                        const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
-                        this.firstColumnCards.push(movedCard);
-                    }
                 } else {
                     this.secondColumnCards.splice(secondIdx, 1, updatedCard);
                     updatedCard.completedAt = null;
@@ -131,20 +128,8 @@ let app = new Vue({
 
             let thirdIdx = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
             if (thirdIdx !== -1) {
-                if (progress < 1) {
-                    if (this.secondColumnCards.length >= 5) {
-                        alert('Во второй колонке уже максимальное количество списков (5)');
-                        this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
-                        updatedCard.completedAt = null;
-                    } else {
-                        updatedCard.completedAt = null;
-                        const [movedCard] = this.thirdColumnCards.splice(thirdIdx, 1);
-                        this.secondColumnCards.push(movedCard);
-                    }
-                } else {
-                    updatedCard.completedAt = updatedCard.completedAt || new Date().toLocaleString();
-                    this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
-                }
+                updatedCard.completedAt = updatedCard.completedAt || new Date().toLocaleString();
+                this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
                 this.saveData();
             }
         },
@@ -193,6 +178,21 @@ let app = new Vue({
 
             this.firstColumnCards.push(newCard);
             this.saveData();
+        },
+
+        checkAllowed(card, item) {
+            const inFirst = this.firstColumnCards.find(c => c.id === card.id);
+            const inSecond = this.secondColumnCards.find(c => c.id === card.id);
+
+            if (inFirst && this.secondColumnCards.length >= 5) {
+                alert('Нельзя отметить пункт, пока в колонке "В работе" 5 карточек');
+                return false;
+            }
+            if (inSecond && this.firstColumnCards.length >= 3) {
+                alert('Нельзя отметить пункт, пока в колонке "Нужно сделать" 3 карточки');
+                return false;
+            }
+            return true;
         }
     }
 });
