@@ -30,6 +30,7 @@ Vue.component('card', {
             </label>
           </li>
         </ul>
+        <p v-if="card.completedAt" class="completed-info">Завершено: {{ card.completedAt }}</p>
         </div>
     `,
 
@@ -51,7 +52,6 @@ let app = new Vue({
             id: null,
             title: '',
             description: '',
-            completed: false
         }
     },
 
@@ -66,7 +66,6 @@ let app = new Vue({
     },
 
     methods: {
-
         saveData() {
             localStorage.setItem('firstColumnCards', JSON.stringify(this.firstColumnCards));
             localStorage.setItem('secondColumnCards', JSON.stringify(this.secondColumnCards));
@@ -82,43 +81,68 @@ let app = new Vue({
 
             const progress = getProgress(updatedCard);
 
-            const firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (firstIdx !== -1) {
-
-                if (progress > 0.5) {
-                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
-                    this.secondColumnCards.push(movedCard);
-                    }
-                this.saveData();
-                return;
+            function updateOrMoveCard(sourceArray, targetArray, cardIndex, card) {
+                sourceArray.splice(cardIndex, 1);
+                targetArray.push(card);
             }
 
-            const secondIdx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (secondIdx !== -1) {
-                this.secondColumnCards.splice(secondIdx, 1, updatedCard);
-
+            let firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (firstIdx !== -1) {
                 if (progress === 1) {
-                    const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
+                    updatedCard.completedAt = new Date().toLocaleString();
+                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
                     this.thirdColumnCards.push(movedCard);
+                } else if (progress > 0.5) {
+                    updatedCard.completedAt = null;
+                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
+                    this.secondColumnCards.push(movedCard);
+                } else {
+                    this.firstColumnCards.splice(firstIdx, 1, updatedCard);
+                    updatedCard.completedAt = null;
                 }
                 this.saveData();
                 return;
             }
 
-            const thirdIdx = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (thirdIdx !== -1) {
-                this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
+            let secondIdx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (secondIdx !== -1) {
+                if (progress === 1) {
+                    updatedCard.completedAt = new Date().toLocaleString();
+                    const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
+                    this.thirdColumnCards.push(movedCard);
+                } else if (progress <= 0.5) {
+                    updatedCard.completedAt = null;
+                    const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
+                    this.firstColumnCards.push(movedCard);
+                } else {
+                    this.secondColumnCards.splice(secondIdx, 1, updatedCard);
+                    updatedCard.completedAt = null;
+                }
+                this.saveData();
+                return;
             }
-            this.saveData();
+
+            let thirdIdx = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (thirdIdx !== -1) {
+                if (progress < 1) {
+                    updatedCard.completedAt = null;
+                    const [movedCard] = this.thirdColumnCards.splice(thirdIdx, 1);
+                    this.secondColumnCards.push(movedCard);
+                } else {
+                    updatedCard.completedAt = updatedCard.completedAt || new Date().toLocaleString();
+                    this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
+                }
+                this.saveData();
+            }
         },
 
         addNewCard() {
             if (this.firstColumnCards.length >= 3 || this.secondColumnCards.length >= 5) {
-                alert("You cannot add a card until there are three cards in the first column or five cards in the second column:(");
+                alert("Вы не можете добавить список, пока количество списков в первой колонке равно 3 или количество списков во второй колонке равно 5");
                 return;
             }
 
-            const title = prompt('Card title');
+            const title = prompt('Заголовок списка');
             if (!title) return;
 
             const items = [];
@@ -127,8 +151,8 @@ let app = new Vue({
             while (i <= 3) {
                 let text = '';
                 do {
-                    text = prompt(`Note ${i} `);
-                    if (!text) alert('Please enter the note');
+                    text = prompt(`Пункт ${i} `);
+                    if (!text) alert('Пожалуйста, введите пункт списка');
                 } while (!text);
 
                 items.push({ text, done: false });
@@ -136,10 +160,10 @@ let app = new Vue({
             }
 
             while (i <= 5) {
-                const cont = confirm('Add a note?');
+                const cont = confirm('Добавить пункт?');
                 if (!cont) break;
 
-                const text = prompt(`Note ${i}`);
+                const text = prompt(`Пункт ${i}`);
                 if (!text) break;
 
                 items.push({ text, done: false });
