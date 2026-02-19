@@ -4,6 +4,10 @@
     padding: 0;
 }
 
+body {
+    background-color: #7e7aaa;
+}
+
 #app {
     display: flex;
     flex-direction: column;
@@ -29,17 +33,25 @@ button {
 }
 
 .column {
-    background-color: #a09ada;
+    border: 2px solid #ffffff;
     border-radius: 10px;
     color: white;
-    padding: 10px;
-    width: 250px;
+    padding: 30px;
+    width: 400px;
     height: auto;
     gap: 20px;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .column ul {
     list-style-type: none;
+}
+
+.card {
+    background-color: #a09ada;
+    width: 300px;
+    border-radius: 10px;
+    padding: 10px;
 }

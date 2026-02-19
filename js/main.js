@@ -3,13 +3,10 @@ Vue.component('column', {
     template: `
     <div class="column">
       <h2>{{ title }}</h2>
-      <card 
-        v-for="card in cards" 
-        :key="card.id" 
-        :card="card" 
-        :checkAllowed="checkAllowed"
-        @update-card="$emit('update-card', $event)"
-      ></card>
+      <div v-if="cards.length === 0">
+        <p>Здесь пока ничего нет</p>
+      </div>
+      <card v-for="card in cards" :key="card.id" :card="card" :checkAllowed="checkAllowed"@update-card="$emit('update-card', $event)"></card>
     </div>
   `
 });
@@ -25,31 +22,34 @@ Vue.component('card', {
     },
 
     template: `
-    <div>
+    <div class="card">
       <h3>{{ card.title }}</h3>
       <ul>
         <li v-for="(item, index) in card.items" :key="index">
           <label>
-            <input 
-              type="checkbox" 
-              :checked="item.done" 
-              @click.prevent="onCheckBoxClick(item)"
-            >
+            <input type="checkbox" :checked="item.done" @change="onCheckBoxChange(item, $event)">
             {{ item.text }}
           </label>
         </li>
       </ul>
-      <p v-if="card.completedAt" class="completed-info">Завершено: {{ card.completedAt }}</p>
+      <p v-if="card.completedAt" class="completed-info">{{ card.completedAt }}</p>
     </div>
   `,
 
     methods: {
-        onCheckBoxClick(item) {
-            if (!this.checkAllowed(this.card, item)) {
-                alert('Ошибка: Вы не можете отметить этот пункт');
+        onCheckBoxChange(item, event) {
+            const newValue = event.target.checked;
+            if (item.done && !newValue) {
+                alert('Вы не можете снять отметку с этого пункта');
+                event.target.checked = true;
                 return;
             }
-            item.done = !item.done;
+            if (!this.checkAllowed(this.card, item)) {
+                alert('Ошибка. Пункт нельзя отметить');
+                event.target.checked = !newValue;
+                return;
+            }
+            this.$set(item, 'done', newValue);
             this.$emit('update-card', this.card);
         }
     }
@@ -62,11 +62,6 @@ let app = new Vue({
         firstColumnCards: [],
         secondColumnCards: [],
         thirdColumnCards: [],
-        newCard: {
-            id: null,
-            title: '',
-            description: '',
-        }
     },
 
     created() {
@@ -87,24 +82,33 @@ let app = new Vue({
         },
 
         updateCard(updatedCard) {
-            function getProgress(card) {
+            const getProgress = card => {
                 const total = card.items.length;
                 const doneCount = card.items.filter(i => i.done).length;
-                return total ? (doneCount / total) : 0;
-            }
+                return total ? doneCount / total : 0;
+            };
 
             const progress = getProgress(updatedCard);
 
-            let firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (firstIdx !== -1) {
-                if (progress > 0.5) {
+            const updateInArray = (arr) => {
+                const idx = arr.findIndex(c => c.id === updatedCard.id);
+                if (idx !== -1) {
+                    this.$set(arr, idx, {...updatedCard});
+                    return true;
+                }
+                return false;
+            };
+
+            if (updateInArray(this.firstColumnCards)) {
+                if (progress >= 0.5) {
                     if (this.secondColumnCards.length >= 5) {
                         alert('Во второй колонке уже максимальное количество списков (5)');
-                        this.firstColumnCards.splice(firstIdx, 1, updatedCard);
                         updatedCard.completedAt = null;
+                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), updatedCard);
                     } else {
                         updatedCard.completedAt = null;
-                        const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
+                        const idx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
+                        const movedCard = this.firstColumnCards.splice(idx,1)[0];
                         this.secondColumnCards.push(movedCard);
                     }
                 }
@@ -112,24 +116,25 @@ let app = new Vue({
                 return;
             }
 
-            let secondIdx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (secondIdx !== -1) {
+            if (updateInArray(this.secondColumnCards)) {
                 if (progress === 1) {
                     updatedCard.completedAt = new Date().toLocaleString();
-                    const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
+                    const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
+                    const movedCard = this.secondColumnCards.splice(idx,1)[0];
                     this.thirdColumnCards.push(movedCard);
                 } else {
-                    this.secondColumnCards.splice(secondIdx, 1, updatedCard);
+                    const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
                     updatedCard.completedAt = null;
+                    this.$set(this.secondColumnCards, idx, updatedCard);
                 }
                 this.saveData();
                 return;
             }
 
-            let thirdIdx = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
-            if (thirdIdx !== -1) {
+            const idx3 = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (idx3 !== -1) {
                 updatedCard.completedAt = updatedCard.completedAt || new Date().toLocaleString();
-                this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
+                this.$set(this.thirdColumnCards, idx3, updatedCard);
                 this.saveData();
             }
         },
@@ -149,7 +154,7 @@ let app = new Vue({
             while (i <= 3) {
                 let text = '';
                 do {
-                    text = prompt(`Пункт ${i} `);
+                    text = prompt(`Пункт ${i}`);
                     if (!text) alert('Пожалуйста, введите пункт списка');
                 } while (!text);
 
@@ -160,10 +165,8 @@ let app = new Vue({
             while (i <= 5) {
                 const cont = confirm('Добавить пункт?');
                 if (!cont) break;
-
                 const text = prompt(`Пункт ${i}`);
                 if (!text) break;
-
                 items.push({text, done: false});
                 i++;
             }
@@ -173,7 +176,8 @@ let app = new Vue({
                 title,
                 items,
                 progress: 0,
-                status: 'one'
+                status: 'one',
+                completedAt: null,
             };
 
             this.firstColumnCards.push(newCard);
@@ -181,18 +185,11 @@ let app = new Vue({
         },
 
         checkAllowed(card, item) {
-            const inFirst = this.firstColumnCards.find(c => c.id === card.id);
-            const inSecond = this.secondColumnCards.find(c => c.id === card.id);
-
-            if (inFirst && this.secondColumnCards.length >= 5) {
-                alert('Нельзя отметить пункт, пока в колонке "В работе" 5 карточек');
-                return false;
-            }
-            if (inSecond && this.firstColumnCards.length >= 3) {
-                alert('Нельзя отметить пункт, пока в колонке "Нужно сделать" 3 карточки');
+            const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
+            if (inFirstColumn && this.secondColumnCards.length >= 5) {
                 return false;
             }
             return true;
-        }
+        },
     }
 });
