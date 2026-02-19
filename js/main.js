@@ -1,32 +1,17 @@
-Vue.component('first-column', {
-    props: ['cards'],
+Vue.component('column', {
+    props: ['title', 'cards'],
     template: `
-        <div class="column">
-            <h2>Первая колонка</h2>
-            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
-        </div>
-    `
-})
-
-Vue.component('second-column', {
-    props: ['cards'],
-    template: `
-        <div class="column">
-            <h2>Вторая колонка</h2>
-            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
-        </div>
-    `
-})
-
-Vue.component('third-column', {
-    props: ['cards'],
-    template: `
-        <div class="column">
-            <h2>Третья колонка</h2>
-            <card v-for="card in cards" :key="card.id" :card="card" @update-card="$emit('update-card', $event)"></card>
-        </div>
-    `
-})
+    <div class="column">
+      <h2>{{ title }}</h2>
+      <card 
+        v-for="card in cards" 
+        :key="card.id" 
+        :card="card" 
+        @update-card="$emit('update-card', $event)"
+      ></card>
+    </div>
+  `
+});
 
 
 Vue.component('card', {
@@ -72,48 +57,71 @@ let app = new Vue({
 
     methods: {
         updateCard(updatedCard) {
-            const columns = [this.firstColumnCards, this.secondColumnCards, this.thirdColumnCards];
-            for (const col of columns) {
-                const idx = col.findIndex(c => c.id === updatedCard.id);
-                if (idx !== -1) {
-                    col.splice(idx, 1, updatedCard);
-                    break;
+            function getProgress(card) {
+                const total = card.items.length;
+                const doneCount = card.items.filter(i => i.done).length;
+                return total ? (doneCount / total) : 0;
+            }
+
+            const progress = getProgress(updatedCard);
+
+            const firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (firstIdx !== -1) {
+                this.firstColumnCards.splice(firstIdx, 1, updatedCard);
+
+                if (progress > 0.5) {
+                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
+                    this.secondColumnCards.push(movedCard);
                 }
+                return;
+            }
+
+            const secondIdx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (secondIdx !== -1) {
+                this.secondColumnCards.splice(secondIdx, 1, updatedCard);
+
+                if (progress === 1) {
+                    const [movedCard] = this.secondColumnCards.splice(secondIdx, 1);
+                    this.thirdColumnCards.push(movedCard);
+                }
+                return;
+            }
+
+            const thirdIdx = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
+            if (thirdIdx !== -1) {
+                this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
             }
         },
 
         addNewCard() {
-            // Проверяем количество карточек
             if (this.firstColumnCards.length >= 3) {
-                alert('Нельзя добавить больше 3 карточек в первый столбец.');
-                return; // Выходим, не добавляя новую карточку
+                alert("You can't add more than 3 cards :(");
+                return;
             }
 
-            const title = prompt('Заголовок карточки');
-            if (!title) return; // если заголовок не введён — сразу выйти
+            const title = prompt('Card title');
+            if (!title) return;
 
             const items = [];
             let i = 1;
 
-            // Минимум 3 элемента — обязательный ввод
             while (i <= 3) {
                 let text = '';
                 do {
-                    text = prompt(`Элемент ${i} (обязательно, минимум 3 элемента)`);
-                    if (!text) alert('Поле не может быть пустым. Пожалуйста, введите текст.');
+                    text = prompt(`Task ${i} `);
+                    if (!text) alert('Please enter the task');
                 } while (!text);
 
                 items.push({ text, done: false });
                 i++;
             }
 
-            // Можно добавить еще элементы, максимум до 5
             while (i <= 5) {
-                const cont = confirm('Добавить еще элемент?');
-                if (!cont) break; // пользователь не хочет добавлять
+                const cont = confirm('Add a task?');
+                if (!cont) break;
 
-                const text = prompt(`Элемент ${i}`);
-                if (!text) break; // отмена или пустая строка - прекращаем ввод
+                const text = prompt(`Task ${i}`);
+                if (!text) break;
 
                 items.push({ text, done: false });
                 i++;
