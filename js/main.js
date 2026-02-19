@@ -55,7 +55,24 @@ let app = new Vue({
         }
     },
 
+    created() {
+        const savedFirst = localStorage.getItem('firstColumnCards');
+        const savedSecond = localStorage.getItem('secondColumnCards');
+        const savedThird = localStorage.getItem('thirdColumnCards');
+
+        if (savedFirst) this.firstColumnCards = JSON.parse(savedFirst);
+        if (savedSecond) this.secondColumnCards = JSON.parse(savedSecond);
+        if (savedThird) this.thirdColumnCards = JSON.parse(savedThird);
+    },
+
     methods: {
+
+        saveData() {
+            localStorage.setItem('firstColumnCards', JSON.stringify(this.firstColumnCards));
+            localStorage.setItem('secondColumnCards', JSON.stringify(this.secondColumnCards));
+            localStorage.setItem('thirdColumnCards', JSON.stringify(this.thirdColumnCards));
+        },
+
         updateCard(updatedCard) {
             function getProgress(card) {
                 const total = card.items.length;
@@ -67,11 +84,14 @@ let app = new Vue({
 
             const firstIdx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
             if (firstIdx !== -1) {
-                this.firstColumnCards.splice(firstIdx, 1, updatedCard);
 
                 if (progress > 0.5) {
-                    const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
-                    this.secondColumnCards.push(movedCard);
+                    if (this.secondColumnCards.length >= 5) {
+                        alert("no");
+                    } else {
+                        const [movedCard] = this.firstColumnCards.splice(firstIdx, 1);
+                        this.secondColumnCards.push(movedCard);
+                    }
                 }
                 return;
             }
@@ -91,6 +111,7 @@ let app = new Vue({
             if (thirdIdx !== -1) {
                 this.thirdColumnCards.splice(thirdIdx, 1, updatedCard);
             }
+            this.saveData();
         },
 
         addNewCard() {
@@ -136,6 +157,7 @@ let app = new Vue({
             };
 
             this.firstColumnCards.push(newCard);
+            this.saveData();
         }
     }
 });
