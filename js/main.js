@@ -31,45 +31,28 @@ Vue.component('third-column', {
 
 Vue.component('card', {
     props: {
-   card: Object,
+        card: Object,
     },
 
     template: `
-    <form class="card-form" @submit.prevent="onSubmit">
-         <p>
-           <label for="title">Заголовок:</label>
-           <input id="title" v-model="title" placeholder="title">
-         </p>
-        
-         <p>
-           <label for="description">Описание:</label>
-           <textarea id="description" v-model="description"></textarea>
-         </p>
-        
-         <p>
-           <input type="submit" value="Submit"> 
-         </p>
-    </form>`,
-
-    data() {
-        return {
-            title: this.card.title || '', // берем из props.card
-            description: this.card.description || '',
-            isFull: false
-        };
-    },
+        <div>
+        <h3>{{ card.title }}</h3>
+        <ul>
+          <li v-for="(item, index) in card.items" :key="index">
+            <label>
+              <input type="checkbox" v-model="item.done" @change="onCheckBoxChange">
+              {{ item.text }}
+            </label>
+          </li>
+        </ul>
+        </div>
+    `,
 
     methods: {
-        onSubmit() {
-            this.$emit('update-card', {
-                ...this.card,
-                title: this.title,
-                description: this.description
-            });
-
-            alert('Карточка сохранена!');
+        onCheckBoxChange() {
+            this.$emit('update-card', this.card);
         }
-    }
+        },
 })
 
 
@@ -80,9 +63,10 @@ let app = new Vue({
         secondColumnCards: [],
         thirdColumnCards: [],
         newCard: {
-            id:null,
+            id: null,
             title: '',
             description: '',
+            completed: false
         }
     },
 
@@ -98,30 +82,52 @@ let app = new Vue({
             }
         },
 
-        addNewCard(cardData) {
-            if (!cardData.title) {
-                alert('Введите заголовок');
-                return;
+        addNewCard() {
+            // Проверяем количество карточек
+            if (this.firstColumnCards.length >= 3) {
+                alert('Нельзя добавить больше 3 карточек в первый столбец.');
+                return; // Выходим, не добавляя новую карточку
             }
 
-            // Создаем уникальный ID для новых карточек (можно улучшить, если нужно)
-            const newId = Date.now();
+            const title = prompt('Заголовок карточки');
+            if (!title) return; // если заголовок не введён — сразу выйти
 
-            // Создаем новую карточку с уникальным ID
+            const items = [];
+            let i = 1;
+
+            // Минимум 3 элемента — обязательный ввод
+            while (i <= 3) {
+                let text = '';
+                do {
+                    text = prompt(`Элемент ${i} (обязательно, минимум 3 элемента)`);
+                    if (!text) alert('Поле не может быть пустым. Пожалуйста, введите текст.');
+                } while (!text);
+
+                items.push({ text, done: false });
+                i++;
+            }
+
+            // Можно добавить еще элементы, максимум до 5
+            while (i <= 5) {
+                const cont = confirm('Добавить еще элемент?');
+                if (!cont) break; // пользователь не хочет добавлять
+
+                const text = prompt(`Элемент ${i}`);
+                if (!text) break; // отмена или пустая строка - прекращаем ввод
+
+                items.push({ text, done: false });
+                i++;
+            }
+
             const newCard = {
-                id: newId,
-                title: cardData.title,
-                description: cardData.description,
+                id: Date.now(),
+                title,
+                items,
+                progress: 0,
+                status: 'one'
             };
 
-            // Добавляем карточку в первую колонку (можно изменить на другую)
             this.firstColumnCards.push(newCard);
-
-            // Очищаем форму создания новой карточки
-            this.newCard.title = '';
-            this.newCard.description = '';
-
-            alert('Новая карточка добавлена!');
         }
     }
 });

@@ -13,7 +13,7 @@
 <body>
 
 <div id="app">
-    <h2>Создать новую карточку</h2>
+    <button @click="addNewCard">Создать новую карточку</button>
     <card
             :card="newCard"
             @update-card="addNewCard"
