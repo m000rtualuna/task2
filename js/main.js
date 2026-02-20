@@ -32,7 +32,7 @@ Vue.component('card', {
           </label>
         </li>
       </ul>
-      <p v-if="card.completedAt" class="completed-info">{{ card.completedAt }}</p>
+      <p v-if="card.completedAt" class="completed-info">Завершено: {{ card.completedAt }}</p>
     </div>
   `,
 
@@ -90,42 +90,45 @@ let app = new Vue({
 
             const progress = getProgress(updatedCard);
 
-            const updateInArray = (arr) => {
-                const idx = arr.findIndex(c => c.id === updatedCard.id);
+            const withCompletedAt = (card, date) => ({ ...card, completedAt: date });
+
+            const updateInArray = (arr, card) => {
+                const idx = arr.findIndex(c => c.id === card.id);
                 if (idx !== -1) {
-                    this.$set(arr, idx, {...updatedCard});
+                    this.$set(arr, idx, card);
                     return true;
                 }
                 return false;
             };
 
-            if (updateInArray(this.firstColumnCards)) {
+            if (updateInArray(this.firstColumnCards, updatedCard)) {
                 if (progress >= 0.5) {
                     if (this.secondColumnCards.length >= 5) {
                         alert('Во второй колонке уже максимальное количество списков (5)');
-                        updatedCard.completedAt = null;
-                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), updatedCard);
+                        const cardNullDate = withCompletedAt(updatedCard, null);
+                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), cardNullDate);
                     } else {
-                        updatedCard.completedAt = null;
                         const idx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
-                        const movedCard = this.firstColumnCards.splice(idx,1)[0];
-                        this.secondColumnCards.push(movedCard);
+                        const movedCard = this.firstColumnCards.splice(idx, 1)[0];
+                        const movedCardReset = withCompletedAt(movedCard, null);
+                        this.secondColumnCards.push(movedCardReset);
                     }
                 }
                 this.saveData();
                 return;
             }
 
-            if (updateInArray(this.secondColumnCards)) {
+            if (updateInArray(this.secondColumnCards, updatedCard)) {
                 if (progress === 1) {
-                    updatedCard.completedAt = new Date().toLocaleString();
+                    const cardWithDate = withCompletedAt(updatedCard, new Date().toLocaleString());
                     const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
-                    const movedCard = this.secondColumnCards.splice(idx,1)[0];
-                    this.thirdColumnCards.push(movedCard);
+                    const movedCard = this.secondColumnCards.splice(idx, 1)[0];
+                    const movedCardWithDate = withCompletedAt(movedCard, new Date().toLocaleString());
+                    this.thirdColumnCards.push(movedCardWithDate);
                 } else {
+                    const cardNullDate = withCompletedAt(updatedCard, null);
                     const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
-                    updatedCard.completedAt = null;
-                    this.$set(this.secondColumnCards, idx, updatedCard);
+                    this.$set(this.secondColumnCards, idx, cardNullDate);
                 }
                 this.saveData();
                 return;
@@ -133,15 +136,16 @@ let app = new Vue({
 
             const idx3 = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
             if (idx3 !== -1) {
-                updatedCard.completedAt = updatedCard.completedAt || new Date().toLocaleString();
-                this.$set(this.thirdColumnCards, idx3, updatedCard);
+                const date = updatedCard.completedAt || new Date().toLocaleString();
+                const cardWithDate = withCompletedAt(updatedCard, date);
+                this.$set(this.thirdColumnCards, idx3, cardWithDate);
                 this.saveData();
             }
         },
 
         addNewCard() {
-            if (this.firstColumnCards.length >= 3 || this.secondColumnCards.length >= 5) {
-                alert("Вы не можете добавить список, пока количество списков в первой колонке равно 3 или количество списков во второй колонке равно 5");
+            if (this.firstColumnCards.length >= 3) {
+                alert("Вы не можете добавить список, пока количество списков в первой колонке равно 3");
                 return;
             }
 
