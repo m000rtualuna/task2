@@ -186,9 +186,15 @@ let app = new Vue({
 
         checkAllowed(card, item) {
             const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
-            if (inFirstColumn && this.secondColumnCards.length >= 5) {
+
+            const total = card.items.length;
+            const doneCount = card.items.filter(i => i.done).length;
+            const progress = total ? doneCount / total : 0;
+
+            if (inFirstColumn && this.secondColumnCards.length >= 5 && progress >= 0.5) {
                 return false;
             }
+
             return true;
         },
     }
