@@ -2,6 +2,9 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    color: #dcdcdc;
+    font-family: sans-serif;
+    word-break: break-word;
 }
 
 body {
@@ -21,7 +24,6 @@ button {
     height: 50px;
     background-color: #a09ada;
     border: none;
-    color: white;
     border-radius: 10px;
     font-weight: bold;
 }
@@ -33,9 +35,7 @@ button {
 }
 
 .column {
-    border: 2px solid #ffffff;
     border-radius: 10px;
-    color: white;
     padding: 30px;
     width: 400px;
     height: auto;
