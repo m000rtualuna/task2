@@ -44,11 +44,22 @@ Vue.component('card', {
                 event.target.checked = true;
                 return;
             }
-            if (!this.checkAllowed(this.card, item)) {
-                alert('Ошибка. Пункт нельзя отметить');
+
+            const itemsCopy = this.card.items.map(i => {
+                if (i === item) return {...i, done: newValue};
+                return i;
+            });
+
+            const total = itemsCopy.length;
+            const doneCount = itemsCopy.filter(i => i.done).length;
+            const newProgress = total ? doneCount / total : 0;
+
+            if (!this.checkAllowed(this.card, item, newProgress)) {
+                alert('Ошибка. Пункт нельзя отметить, так как во второй колонке нет места.');
                 event.target.checked = !newValue;
                 return;
             }
+
             this.$set(item, 'done', newValue);
             this.$emit('update-card', this.card);
         }
@@ -188,18 +199,20 @@ let app = new Vue({
             this.saveData();
         },
 
-        checkAllowed(card, item) {
+        checkAllowed(card, item, newProgress) {
             const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
 
-            const total = card.items.length;
-            const doneCount = card.items.filter(i => i.done).length;
-            const progress = total ? doneCount / total : 0;
+            if (newProgress === undefined) {
+                const total = card.items.length;
+                const doneCount = card.items.filter(i => i.done).length;
+                newProgress = total ? doneCount / total : 0;
+            }
 
-            if (inFirstColumn && this.secondColumnCards.length >= 5 && progress >= 0.5) {
+            if (inFirstColumn && this.secondColumnCards.length >= 5 && newProgress >= 0.5) {
                 return false;
             }
 
             return true;
-        },
+        }
     }
 });
