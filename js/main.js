@@ -73,6 +73,8 @@ let app = new Vue({
         firstColumnCards: [],
         secondColumnCards: [],
         thirdColumnCards: [],
+        newCardTitle: '',
+        newCardItems: ['','',''],
     },
 
     created() {
@@ -154,50 +156,6 @@ let app = new Vue({
             }
         },
 
-        addNewCard() {
-            if (this.firstColumnCards.length >= 3) {
-                alert("Вы не можете добавить список, пока количество списков в первой колонке равно 3");
-                return;
-            }
-
-            const title = prompt('Заголовок списка');
-            if (!title) return;
-
-            const items = [];
-            let i = 1;
-
-            while (i <= 3) {
-                let text = '';
-                do {
-                    text = prompt(`Пункт ${i}`);
-                    if (!text) alert('Пожалуйста, введите пункт списка');
-                } while (!text);
-
-                items.push({text, done: false});
-                i++;
-            }
-
-            while (i <= 5) {
-                const cont = confirm('Добавить пункт?');
-                if (!cont) break;
-                const text = prompt(`Пункт ${i}`);
-                if (!text) break;
-                items.push({text, done: false});
-                i++;
-            }
-
-            const newCard = {
-                id: Date.now(),
-                title,
-                items,
-                progress: 0,
-                status: 'one',
-                completedAt: null,
-            };
-
-            this.firstColumnCards.push(newCard);
-            this.saveData();
-        },
 
         checkAllowed(card, item, newProgress) {
             const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
@@ -213,6 +171,38 @@ let app = new Vue({
             }
 
             return true;
-        }
+        },
+
+        submitNewCard() {
+            if (this.firstColumnCards.length >= 3) {
+                alert("Вы не можете добавить список, пока количество списков в первой колонке равно 3");
+                return;
+            }
+
+            if (!this.newCardTitle.trim()) return alert('Введите заголовок');
+
+            for (let i = 0; i < this.newCardItems.length; i++) {
+                if (!this.newCardItems[i].trim()) {
+                    return alert(`Заполните Пункт ${i + 1}`);
+                }
+            }
+
+            const items = this.newCardItems.map(text => ({ text: text.trim(), done: false }));
+
+            const newCard = {
+                id: Date.now(),
+                title: this.newCardTitle.trim(),
+                items,
+                progress: 0,
+                status: 'one',
+                completedAt: null,
+            };
+
+            this.firstColumnCards.push(newCard);
+            this.saveData();
+
+            this.newCardTitle = '';
+            this.newCardItems = ['', '', ''];
+        },
     }
 });

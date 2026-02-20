@@ -13,8 +13,19 @@
 <body>
 
 <div id="app">
+    <form @submit.prevent="submitNewCard">
+        <p>Заголовок списка</p>
+        <input type="text" v-model="newCardTitle" required />
 
-    <button @click="addNewCard">Создать список задач</button>
+        <div v-for="(item, index) in newCardItems" :key="index">
+            <p>Пункт списка</p>
+            <input type="text" v-model="newCardItems[index]" required />
+        </div>
+
+        <button type="button" @click="newCardItems.push('')" :disabled="newCardItems.length >= 5">Добавить пункт</button>
+
+        <button type="submit">Добавить карточку</button>
+    </form>
 
     <div class="columns">
         <column title="Новые" :cards="firstColumnCards" :check-allowed="checkAllowed" @update-card="updateCard"></column>

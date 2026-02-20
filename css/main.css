@@ -2,7 +2,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    color: #dcdcdc;
+    color: #eaeaea;
     font-family: sans-serif;
     word-break: break-word;
 }
@@ -15,13 +15,12 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 50px;
-    padding: 50px;
+    gap: 30px;
+    padding: 20px;
 }
 
-button {
-    width: 200px;
-    height: 50px;
+button, input[type="text"] {
+    padding: 10px;
     background-color: #a09ada;
     border: none;
     border-radius: 10px;
@@ -53,5 +52,13 @@ button {
     background-color: #a09ada;
     width: 300px;
     border-radius: 10px;
+    padding: 10px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
     padding: 10px;
 }
