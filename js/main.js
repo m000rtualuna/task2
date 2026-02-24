@@ -83,7 +83,7 @@ Vue.component('card', {
             const newProgress = total ? doneCount / total : 0;
 
             if (!this.checkAllowed(this.card, item, newProgress)) {
-                alert('Пункт нельзя отметить, так как во второй колонке нет места');
+                alert('Пункт нельзя отметить');
                 event.target.checked = !newValue;
                 return;
             }
@@ -183,22 +183,6 @@ let app = new Vue({
                     }
                 } else {
                     this.$set(this.secondColumnCards, idx, { ...updatedCard, completedAt: null });
-                }
-                this.saveData();
-                return;
-            }
-
-            if (updateInArray(this.firstColumnCards, updatedCard)) {
-                const progress = getProgress(updatedCard);
-                if (progress >= 0.5) {
-                    if (this.secondColumnCards.length >= 5) {
-                        alert('Во второй колонке уже максимальное количество списков (5)');
-                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), { ...updatedCard, completedAt: null });
-                    } else {
-                        const idx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
-                        const movedCard = this.firstColumnCards.splice(idx, 1)[0];
-                        this.secondColumnCards.push({ ...movedCard, completedAt: null });
-                    }
                 }
                 this.saveData();
                 return;
