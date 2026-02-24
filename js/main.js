@@ -39,11 +39,6 @@ Vue.component('card', {
     methods: {
         onCheckBoxChange(item, event) {
             const newValue = event.target.checked;
-            if (item.done && !newValue) {
-                alert('Вы не можете снять отметку с этого пункта');
-                event.target.checked = true;
-                return;
-            }
 
             const itemsCopy = this.card.items.map(i => {
                 if (i === item) return {...i, done: newValue};
@@ -101,8 +96,6 @@ let app = new Vue({
                 return total ? doneCount / total : 0;
             };
 
-            const progress = getProgress(updatedCard);
-
             const withCompletedAt = (card, date) => ({ ...card, completedAt: date });
 
             const updateInArray = (arr, card) => {
@@ -115,16 +108,15 @@ let app = new Vue({
             };
 
             if (updateInArray(this.firstColumnCards, updatedCard)) {
+                const progress = getProgress(updatedCard);
                 if (progress >= 0.5) {
                     if (this.secondColumnCards.length >= 5) {
                         alert('Во второй колонке уже максимальное количество списков (5)');
-                        const cardNullDate = withCompletedAt(updatedCard, null);
-                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), cardNullDate);
+                        this.$set(this.firstColumnCards, this.firstColumnCards.findIndex(c => c.id === updatedCard.id), { ...updatedCard, completedAt: null });
                     } else {
                         const idx = this.firstColumnCards.findIndex(c => c.id === updatedCard.id);
                         const movedCard = this.firstColumnCards.splice(idx, 1)[0];
-                        const movedCardReset = withCompletedAt(movedCard, null);
-                        this.secondColumnCards.push(movedCardReset);
+                        this.secondColumnCards.push({ ...movedCard, completedAt: null });
                     }
                 }
                 this.saveData();
@@ -132,16 +124,19 @@ let app = new Vue({
             }
 
             if (updateInArray(this.secondColumnCards, updatedCard)) {
+                const progress = getProgress(updatedCard);
                 if (progress === 1) {
-                    const cardWithDate = withCompletedAt(updatedCard, new Date().toLocaleString());
                     const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
                     const movedCard = this.secondColumnCards.splice(idx, 1)[0];
-                    const movedCardWithDate = withCompletedAt(movedCard, new Date().toLocaleString());
-                    this.thirdColumnCards.push(movedCardWithDate);
-                } else {
-                    const cardNullDate = withCompletedAt(updatedCard, null);
+                    const cardWithDate = { ...movedCard, completedAt: new Date().toLocaleString() };
+                    this.thirdColumnCards.push(cardWithDate);
+                } else if (progress < 0.5) {
                     const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
-                    this.$set(this.secondColumnCards, idx, cardNullDate);
+                    const movedCard = this.secondColumnCards.splice(idx, 1)[0];
+                    this.firstColumnCards.push({ ...movedCard, completedAt: null });
+                } else {
+                    const idx = this.secondColumnCards.findIndex(c => c.id === updatedCard.id);
+                    this.$set(this.secondColumnCards, idx, { ...updatedCard, completedAt: null });
                 }
                 this.saveData();
                 return;
@@ -149,13 +144,18 @@ let app = new Vue({
 
             const idx3 = this.thirdColumnCards.findIndex(c => c.id === updatedCard.id);
             if (idx3 !== -1) {
-                const date = updatedCard.completedAt || new Date().toLocaleString();
-                const cardWithDate = withCompletedAt(updatedCard, date);
-                this.$set(this.thirdColumnCards, idx3, cardWithDate);
+                const progress = getProgress(updatedCard);
+                if (progress < 1) {
+                    const movedCard = this.thirdColumnCards.splice(idx3, 1)[0];
+                    this.secondColumnCards.push({ ...movedCard, completedAt: null });
+                } else {
+                    const date = getProgress(updatedCard) === 1 ? new Date().toLocaleString() : null;
+                    this.$set(this.thirdColumnCards, idx3, { ...updatedCard, completedAt: date });
+                }
                 this.saveData();
+                return;
             }
         },
-
 
         checkAllowed(card, item, newProgress) {
             const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
