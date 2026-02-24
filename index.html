@@ -28,11 +28,30 @@
     </form>
 
     <div class="columns">
-        <column title="Новые" :cards="firstColumnCards" :check-allowed="checkAllowed" @update-card="updateCard"></column>
+        <!-- Внутри <div class="columns"> -->
+        <column
+                title="Новые"
+                :cards="firstColumnCards"
+                :check-allowed="checkAllowed"
+                @update-card="updateCard"
+                @update-order="handleUpdateOrder('firstColumnCards', $event)">
+        </column>
 
-        <column title="В процессе" :cards="secondColumnCards" :check-allowed="checkAllowed" @update-card="updateCard"></column>
+        <column
+                title="В процессе"
+                :cards="secondColumnCards"
+                :check-allowed="checkAllowed"
+                @update-card="updateCard"
+                @update-order="handleUpdateOrder('secondColumnCards', $event)">
+        </column>
 
-        <column title="Завершённые" :cards="thirdColumnCards" :check-allowed="checkAllowed" @update-card="updateCard"></column>
+        <column
+                title="Завершённые"
+                :cards="thirdColumnCards"
+                :check-allowed="checkAllowed"
+                @update-card="updateCard"
+                @update-order="handleUpdateOrder('thirdColumnCards', $event)">
+        </column>
     </div>
 
 </div>
