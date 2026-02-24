@@ -228,16 +228,17 @@ let app = new Vue({
 
         checkAllowed(card, item, newProgress) {
             const inFirstColumn = this.firstColumnCards.some(c => c.id === card.id);
+            const inSecondColumn = this.secondColumnCards.some(c => c.id === card.id);
             const inThirdColumn = this.thirdColumnCards.some(c => c.id === card.id);
-
             if (inThirdColumn && !inFirstColumn && this.secondColumnCards.length >= 5 && newProgress < 1) {
                 return false;
             }
-
+            if (inSecondColumn && inFirstColumn === false && this.firstColumnCards.length >= 3 && newProgress < 0.5) {
+                return false;
+            }
             if (inFirstColumn && this.secondColumnCards.length >= 5 && newProgress >= 0.5) {
                 return false;
             }
-
             return true;
         },
 
